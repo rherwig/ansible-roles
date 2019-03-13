@@ -1,0 +1,82 @@
+---
+
+- name: ensure php environment is present
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - "php{{ php.version }}-dev"
+
+- name: ensure apt repository is present
+  apt_repository:
+    repo: "{{ php_v8.apt_repository }}"
+    state: present
+    validate_certs: false
+    update_cache: true
+
+- name: ensure libv8 is present
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - patchelf
+      - "libv8-{{ php_v8.version }}"
+      - "libv8-{{ php_v8.version }}-dev"
+
+- name: ensure libv8 script is copied
+  template:
+    src: patchelf.sh.j2
+    dest: /tmp/patchelf.sh
+
+- name: ensure v8js is not yet installed
+  stat:
+    path: /tmp/v8js/modules/v8js.so
+  register: extension
+
+- name: ensure libv8 fix is applied
+  command: sh /tmp/patchelf.sh
+  when: extension.stat.exists == False
+
+- name: ensure v8js repository is present
+  git:
+    repo: https://github.com/phpv8/v8js.git
+    dest: /tmp/v8js
+
+- name: ensure v8js is phpized
+  command: phpize
+  args:
+    chdir: /tmp/v8js
+  when: extension.stat.exists == False
+
+- name: ensure v8js installation is configured
+  command: "./configure --with-v8js=/opt/libv8-{{ php_v8.version }}"
+  args:
+    chdir: /tmp/v8js
+  when: extension.stat.exists == False
+
+- name: ensure v8js is built
+  command: make
+  args:
+    chdir: /tmp/v8js
+  when: extension.stat.exists == False
+
+- name: ensure v8js extension is built
+  command: make install
+  args:
+    chdir: /tmp/v8js
+  when: extension.stat.exists == False
+
+- name: ensure v8js extension is not yet configured
+  command: php --ri v8
+  register: php_ri
+  failed_when: php_ri.rc > 1
+
+- name: ensure v8js extension is enabled
+  lineinfile:
+    path: "/etc/php/{{ php.version }}/fpm/php.ini"
+    line: "extension=v8js.so"
+  when: php_ri.stdout.find('not present') != -1
+  notify:
+    - restart php

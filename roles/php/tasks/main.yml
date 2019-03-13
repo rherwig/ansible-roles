@@ -1,0 +1,6 @@
+---
+
+- name: ensure php is present
+  apt:
+    name: "php{{ php.version }}-fpm"
+    state: present

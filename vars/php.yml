@@ -1,0 +1,10 @@
+---
+nginx:
+  host: vagrant
+  vhosts:
+    - name: pali
+      port: 80
+      template: php
+
+php:
+  version: 7.2

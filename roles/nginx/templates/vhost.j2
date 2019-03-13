@@ -1,0 +1,13 @@
+server {
+    server_name {{ item.name }}.{{ nginx.host }};
+
+    listen {{ item.port }};
+    listen [::]:{{ item.port }};
+
+    root /var/www/{{ item.name }};
+    index index.html;
+
+    location / {
+        try_files $uri $uri/ =404;
+    }
+}

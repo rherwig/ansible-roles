@@ -1,0 +1,5 @@
+nginx:
+  host: vagrant
+  vhosts:
+    - name: pali.vagrant
+      port: 80

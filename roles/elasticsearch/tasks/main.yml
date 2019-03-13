@@ -1,0 +1,33 @@
+---
+
+- name: ensure openjdk is present
+  apt:
+    name: openjdk-11-jre
+    state: present
+
+- name: ensure apt key is present
+  apt_key:
+    url: "{{ elasticsearch_key_url }}"
+    state: present
+
+- name: ensure apt repository is present
+  apt_repository:
+    repo: "{{ elasticsearch_apt_repo }}"
+    state: present
+  notify:
+    - apt update
+
+- name: ensure elasticsearch is present
+  apt:
+    name: elasticsearch
+    state: present
+
+- name: ensure config is present
+  template:
+    src: elasticsearch.yml.j2
+    dest: /etc/elasticsearch/elasticsearch.yml
+
+- name: ensure service is running
+  service:
+    name: elasticsearch
+    state: started

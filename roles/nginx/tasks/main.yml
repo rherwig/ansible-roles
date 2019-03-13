@@ -1,0 +1,61 @@
+---
+
+- name: ensure nginx is present
+  apt:
+    name: "{{ packages }}"
+    state: present
+  vars:
+    packages:
+      - nginx
+
+- name: ensure default vhost is absent
+  file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: ensure vhosts are set up
+  template:
+    src: vhost.j2
+    dest: "/etc/nginx/sites-available/{{ item.name }}"
+  when: (item.proxy is undefined) and (item.template is undefined)
+  with_items: "{{ nginx.vhosts }}"
+
+- name: ensure template hosts are set up
+  template:
+    src: "{{ item.template }}.j2"
+    dest: "/etc/nginx/sites-available/{{ item.name }}"
+  when: (item.proxy is undefined) and (item.template is defined)
+  with_items: "{{ nginx.vhosts }}"
+
+- name: ensure proxies are set up
+  template:
+    src: proxy.j2
+    dest: "/etc/nginx/sites-available/{{ item.name }}"
+  when: item.proxy is defined
+  with_items: "{{ nginx.vhosts }}"
+
+- name: ensure vhosts are active
+  file:
+    src: "/etc/nginx/sites-available/{{ item.name }}"
+    dest: "/etc/nginx/sites-enabled/{{ item.name }}"
+    state: link
+  with_items: "{{ nginx.vhosts }}"
+
+- name: create vhost directory
+  file:
+    path: "/var/www/{{ item.name }}"
+    state: directory
+  when: item.proxy is undefined
+  with_items: "{{ nginx.vhosts }}"
+
+- name: copy page contents
+  copy:
+    src: index.html
+    dest: "/var/www/{{ item.name }}/index.html"
+  when: item.proxy is undefined
+  with_items: "{{ nginx.vhosts }}"
+
+- name: ensure nginx config is reloaded
+  service:
+    name: nginx
+    state: reloaded
