@@ -55,6 +55,8 @@
   when: item.proxy is undefined
   with_items: "{{ nginx.vhosts }}"
 
+- import_tasks: ssl.yml
+
 - name: ensure nginx config is reloaded
   service:
     name: nginx

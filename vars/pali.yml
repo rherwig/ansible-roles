@@ -1,0 +1,38 @@
+---
+nodejs:
+  version: 11
+  global_modules:
+    - pm2
+
+pm2:
+  apps:
+    - name: webapp
+      path: /vagrant/pali/webapp/
+      file: process.yml
+      skip: true
+
+nginx:
+  host: pali
+  vhosts:
+    - name: app
+      port: 80
+      proxy: http://localhost:8080
+      ssl:
+        name: "pali"
+        port: 443
+        alt_names:
+          - DNS:pali
+          - DNS:app.pali
+          - DNS:api.pali
+          - DNS:graph.pali
+    - name: api
+      port: 80
+      proxy: http://localhost:3000
+      ssl:
+        name: "pali"
+        port: 443
+        alt_names:
+          - DNS:pali
+          - DNS:app.pali
+          - DNS:api.pali
+          - DNS:graph.pali

@@ -15,3 +15,10 @@
   apt:
     name: nodejs
     state: present
+
+- name: ensure global modules are present
+  npm:
+    name: "{{ item }}"
+    global: true
+    state: present
+  with_items: "{{ nodejs.global_modules }}"

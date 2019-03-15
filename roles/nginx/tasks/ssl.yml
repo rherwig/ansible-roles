@@ -1,0 +1,40 @@
+---
+- name: ensure pip is present
+  apt:
+    name: "python-pip"
+    state: present
+
+- name: ensure openssl is present
+  pip:
+    name: pyopenssl
+
+- name: ensure cert directories are present
+  file:
+    path: "/etc/ssl/{{ item.ssl.name }}"
+    state: directory
+  when: item.ssl is defined
+  with_items: "{{ nginx.vhosts }}"
+
+- name: ensure private key is present
+  openssl_privatekey:
+    path: "/etc/ssl/{{ item.ssl.name }}/key.pem"
+  when: item.ssl is defined
+  with_items: "{{ nginx.vhosts }}"
+
+- name: ensure csr is present
+  openssl_csr:
+    path: "/etc/ssl/{{ item.ssl.name }}/cert.csr"
+    privatekey_path: "/etc/ssl/{{ item.ssl.name }}/key.pem"
+    common_name: "localhost"
+    subject_alt_name: "{{ item.ssl.alt_names }}"
+  when: item.ssl is defined
+  with_items: "{{ nginx.vhosts }}"
+
+- name: ensure certificate is present
+  openssl_certificate:
+    path: "/etc/ssl/{{ item.ssl.name }}/cert.crt"
+    privatekey_path: "/etc/ssl/{{ item.ssl.name }}/key.pem"
+    csr_path: "/etc/ssl/{{ item.ssl.name }}/cert.csr"
+    provider: selfsigned
+  when: item.ssl is defined
+  with_items: "{{ nginx.vhosts }}"

@@ -1,0 +1,13 @@
+---
+- name: ensure pm2 is present
+  npm:
+    name: pm2
+    global: true
+    state: present
+
+- name: ensure processes are started
+  command: "pm2 start {{ item.file }}"
+  args:
+    chdir: "{{ item.path }}"
+  when: item.skip != true
+  with_items: "{{ pm2.apps }}"

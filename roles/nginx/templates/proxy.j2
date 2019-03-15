@@ -4,6 +4,15 @@ server {
     listen {{ item.port }};
     listen [::]:{{ item.port }};
 
+    {% if item.ssl is defined %}
+        listen {{ item.ssl.port }} ssl http2;
+        listen [::]:{{ item.ssl.port }} ssl http2;
+        ssl_certificate     /etc/ssl/{{ item.ssl.name }}/cert.crt;
+        ssl_certificate_key /etc/ssl/{{ item.ssl.name }}/key.pem;
+        ssl_protocols       TLSv1 TLSv1.1 TLSv1.2;
+        ssl_ciphers         HIGH:!aNULL:!MD5;
+    {% endif %}
+
     location / {
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
