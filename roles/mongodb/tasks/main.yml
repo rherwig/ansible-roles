@@ -1,0 +1,5 @@
+---
+- name: ensure mongodb is installed
+  apt:
+    name: "mongodb"
+    state: present
